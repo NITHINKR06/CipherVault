@@ -158,17 +158,21 @@ source sql/schema.sql;
 
 ### Step 2 — Configure `application.properties`
 
-Edit `src/main/resources/application.properties`:
+CipherVault reads secrets from environment variables (recommended for Render/Railway).
 
-```properties
-spring.datasource.username=YOUR_MYSQL_USER
-spring.datasource.password=YOUR_MYSQL_PASSWORD
+Set these env vars locally (or in your hosting provider):
 
-# Must be exactly 32 characters for AES-256
-ciphervault.aes.secret=ChangeThisToA32CharSecretKey!123
+```bash
+# MySQL
+DB_URL=jdbc:mysql://localhost:3306/ciphervault?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+DB_USER=YOUR_MYSQL_USER
+DB_PASSWORD=YOUR_MYSQL_PASSWORD
+
+# AES key (use 32+ chars; keep it private)
+AES_SECRET=ChangeThisToAStrongSecretKeyAtLeast32Chars
 ```
 
-> ⚠️ **Never commit your AES secret or database credentials to version control.**
+> ⚠️ Never commit `.env`, DB credentials, or `AES_SECRET`.
 
 ---
 
