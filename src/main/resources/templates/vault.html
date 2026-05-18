@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CipherVault — My Vault</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="vault-body">
+
+<!-- Sidebar -->
+<div class="sidebar">
+    <div class="sidebar-brand">
+        <i class="bi bi-shield-lock-fill"></i>
+        <span>CipherVault</span>
+    </div>
+
+    <nav class="sidebar-nav">
+        <a href="/vault" class="nav-item active">
+            <i class="bi bi-grid-1x2-fill"></i> Dashboard
+        </a>
+        <a href="/vault/add" class="nav-item">
+            <i class="bi bi-plus-circle-fill"></i> Add Secret
+        </a>
+        <a href="#auditSection" class="nav-item">
+            <i class="bi bi-clock-history"></i> Audit Log
+        </a>
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-info">
+            <div class="user-avatar"><i class="bi bi-person-fill"></i></div>
+            <div>
+                <div class="user-name" th:text="${user.username}">user</div>
+                <div class="user-role">Vault Owner</div>
+            </div>
+        </div>
+        <form th:action="@{/logout}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <button type="submit" class="btn-logout">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+
+    <!-- Alerts -->
+    <div th:if="${success}" class="alert alert-success-cv alert-dismissible mb-4">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        <span th:text="${success}"></span>
+        <button type="button" class="btn-close-cv" onclick="this.parentElement.remove()">×</button>
+    </div>
+    <div th:if="${warning}" class="alert alert-warning-cv alert-dismissible mb-4">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <span th:text="${warning}"></span>
+        <button type="button" class="btn-close-cv" onclick="this.parentElement.remove()">×</button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger-cv alert-dismissible mb-4">
+        <i class="bi bi-x-circle-fill me-2"></i>
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close-cv" onclick="this.parentElement.remove()">×</button>
+    </div>
+
+    <!-- Page Header -->
+    <div class="page-header mb-5">
+        <div>
+            <h1 class="page-title">Your Vault</h1>
+            <p class="page-sub">All entries encrypted with AES-256-GCM</p>
+        </div>
+        <a href="/vault/add" class="btn-cv-primary">
+            <i class="bi bi-plus-lg me-2"></i>Add Secret
+        </a>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="bi bi-archive-fill"></i></div>
+                <div class="stat-value" th:text="${stats.total}">0</div>
+                <div class="stat-label">Total Secrets</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card stat-safe">
+                <div class="stat-icon text-success"><i class="bi bi-shield-check-fill"></i></div>
+                <div class="stat-value" th:text="${stats.safe}">0</div>
+                <div class="stat-label">Safe Entries</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card stat-danger">
+                <div class="stat-icon text-danger"><i class="bi bi-shield-exclamation"></i></div>
+                <div class="stat-value" th:text="${stats.breached}">0</div>
+                <div class="stat-label">Breached</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-icon text-warning"><i class="bi bi-speedometer2"></i></div>
+                <div class="stat-value" th:text="${stats.avgStrength}">0</div>
+                <div class="stat-label">Avg. Strength</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search & Filter -->
+    <div class="d-flex gap-3 mb-4 flex-wrap">
+        <input type="text" id="searchInput" class="form-control-cv" placeholder="🔍  Search vault entries..."
+               oninput="filterEntries()" style="max-width:320px;">
+        <select id="categoryFilter" class="form-select-cv" onchange="filterEntries()">
+            <option value="">All Categories</option>
+            <option value="General">General</option>
+            <option value="Social">Social</option>
+            <option value="Banking">Banking</option>
+            <option value="Work">Work</option>
+            <option value="Shopping">Shopping</option>
+            <option value="Email">Email</option>
+        </select>
+        <select id="statusFilter" class="form-select-cv" onchange="filterEntries()">
+            <option value="">All Status</option>
+            <option value="safe">Safe Only</option>
+            <option value="breached">Breached Only</option>
+        </select>
+    </div>
+
+    <!-- Vault Entries Table -->
+    <div class="vault-table-wrap mb-5">
+        <table class="vault-table" id="vaultTable">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Category</th>
+                    <th>Username</th>
+                    <th>Password</th>
+                    <th>Strength</th>
+                    <th>Breach</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="entriesBody">
+                <tr th:if="${entries.empty}">
+                    <td colspan="7" class="text-center py-5">
+                        <div class="empty-vault">
+                            <i class="bi bi-inbox-fill"></i>
+                            <p>Vault is empty. <a href="/vault/add">Add your first secret</a></p>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:each="entry : ${entries}"
+                    th:attr="data-title=${entry.title},
+                             data-category=${entry.category},
+                             data-breached=${entry.isBreached()}"
+                    th:classappend="${entry.isBreached()} ? 'row-breached' : ''">
+
+                    <!-- Title -->
+                    <td>
+                        <div class="entry-title" th:text="${entry.title}">Title</div>
+                        <div class="entry-url" th:text="${entry.siteUrl}" th:if="${entry.siteUrl != null}"></div>
+                    </td>
+
+                    <!-- Category -->
+                    <td>
+                        <span class="badge-category" th:text="${entry.category}">General</span>
+                    </td>
+
+                    <!-- Username (hidden by default) -->
+                    <td>
+                        <div class="secret-field">
+                            <span class="secret-masked" th:id="'username-' + ${entry.id}">••••••••</span>
+                        </div>
+                    </td>
+
+                    <!-- Password (hidden by default) -->
+                    <td>
+                        <div class="secret-field">
+                            <span class="secret-masked" th:id="'password-' + ${entry.id}">••••••••</span>
+                            <button class="btn-icon" th:onclick="'revealEntry(' + ${entry.id} + ', this)'"
+                                    title="Reveal">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <button class="btn-icon" th:onclick="'copySecret(' + ${entry.id} + ')'"
+                                    title="Copy Password">
+                                <i class="bi bi-clipboard"></i>
+                            </button>
+                        </div>
+                    </td>
+
+                    <!-- Strength -->
+                    <td>
+                        <div class="strength-mini-wrap">
+                            <div class="strength-mini-bar">
+                                <div class="strength-mini-fill"
+                                     th:style="'width:' + ${entry.strengthScore} + '%;background:' +
+                                               (${entry.strengthScore} < 40 ? '#ff2d55' :
+                                                ${entry.strengthScore} < 70 ? '#ffd60a' : '#30d158')">
+                                </div>
+                            </div>
+                            <span class="strength-mini-label" th:text="${entry.strengthScore} + '/100'">0</span>
+                        </div>
+                    </td>
+
+                    <!-- Breach Status -->
+                    <td>
+                        <span th:if="${entry.isBreached()}" class="badge-breach">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                            <span th:text="${entry.breachCount} + 'x'"></span>
+                        </span>
+                        <span th:unless="${entry.isBreached()}" class="badge-safe">
+                            <i class="bi bi-shield-check me-1"></i>Safe
+                        </span>
+                    </td>
+
+                    <!-- Actions -->
+                    <td>
+                        <div class="action-buttons">
+                            <a th:href="@{/vault/edit/{id}(id=${entry.id})}" class="btn-icon" title="Edit">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
+                            <button class="btn-icon text-danger"
+                                    th:onclick="'confirmDelete(' + ${entry.id} + ', \'' + ${entry.title} + '\')'">
+                                <i class="bi bi-trash3-fill"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Audit Log Section -->
+    <div id="auditSection" class="audit-section mb-5">
+        <h3 class="section-title-sm mb-4"><i class="bi bi-clock-history me-2"></i>Recent Activity</h3>
+        <div class="audit-list">
+            <div th:each="log : ${auditLogs}" class="audit-item">
+                <div class="audit-action" th:text="${log.action}">Action</div>
+                <div class="audit-meta">
+                    <span th:text="${#temporals.format(log.timestamp, 'dd MMM yyyy HH:mm')}">time</span>
+                    <span th:if="${log.ipAddress != null}" th:text="'• ' + ${log.ipAddress}"></span>
+                </div>
+            </div>
+            <div th:if="${auditLogs.empty}" class="text-muted-cv text-center py-3">No activity logged yet.</div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" id="deleteModal" style="display:none;">
+    <div class="modal-box">
+        <div class="modal-icon text-danger"><i class="bi bi-trash3-fill"></i></div>
+        <h4>Delete Entry?</h4>
+        <p id="deleteModalMsg">This will permanently remove this entry from your vault.</p>
+        <div class="d-flex gap-3 justify-content-center mt-4">
+            <button class="btn-cv-secondary" onclick="closeDeleteModal()">Cancel</button>
+            <form id="deleteForm" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" id="deleteToken"/>
+                <button type="submit" class="btn-cv-danger">Delete</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/vault.js}"></script>
+<script th:inline="javascript">
+    // CSRF token for AJAX
+    const CSRF_TOKEN = /*[[${_csrf.token}]]*/ '';
+    const CSRF_HEADER = /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN';
+</script>
+</body>
+</html>

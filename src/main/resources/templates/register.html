@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CipherVault — Create Vault</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="auth-body">
+
+<div class="bg-grid"></div>
+
+<div class="auth-wrapper">
+    <div class="auth-card">
+
+        <div class="auth-brand">
+            <div class="brand-icon-lg"><i class="bi bi-shield-plus-fill"></i></div>
+            <h2 class="auth-title">Create Vault</h2>
+            <p class="auth-subtitle">Your secrets deserve better protection</p>
+        </div>
+
+        <div th:if="${error}" class="alert alert-danger-cv">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <span th:text="${error}"></span>
+        </div>
+
+        <form th:action="@{/register}" method="post">
+
+            <div class="form-group-cv mb-3">
+                <label class="form-label-cv">Username</label>
+                <div class="input-icon-wrapper">
+                    <i class="bi bi-person input-icon"></i>
+                    <input type="text" name="username" class="form-control-cv"
+                           placeholder="choose_a_username" required minlength="3" maxlength="50">
+                </div>
+            </div>
+
+            <div class="form-group-cv mb-3">
+                <label class="form-label-cv">Email</label>
+                <div class="input-icon-wrapper">
+                    <i class="bi bi-envelope input-icon"></i>
+                    <input type="email" name="email" class="form-control-cv"
+                           placeholder="your@email.com" required>
+                </div>
+            </div>
+
+            <div class="form-group-cv mb-3">
+                <label class="form-label-cv">Master Password</label>
+                <div class="input-icon-wrapper">
+                    <i class="bi bi-lock input-icon"></i>
+                    <input type="password" name="password" id="regPassword" class="form-control-cv"
+                           placeholder="Min 8 characters" required minlength="8"
+                           oninput="liveStrength(this.value)">
+                    <button type="button" class="toggle-password" onclick="togglePasswordVisibility('regPassword', this)">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
+                <!-- Live strength bar -->
+                <div class="strength-bar-wrap mt-2">
+                    <div class="strength-bar" id="strengthBar"></div>
+                </div>
+                <small class="strength-label" id="strengthLabel"></small>
+            </div>
+
+            <div class="form-group-cv mb-4">
+                <label class="form-label-cv">Confirm Password</label>
+                <div class="input-icon-wrapper">
+                    <i class="bi bi-lock-fill input-icon"></i>
+                    <input type="password" name="confirmPassword" id="confirmPassword" class="form-control-cv"
+                           placeholder="Repeat password" required>
+                </div>
+            </div>
+
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+            <button type="submit" class="btn-cv-primary w-100">
+                <i class="bi bi-shield-lock-fill me-2"></i>Initialize Vault
+            </button>
+        </form>
+
+        <div class="auth-footer-link mt-4 text-center">
+            Already have a vault? <a th:href="@{/login}">Sign in</a>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/vault.js}"></script>
+</body>
+</html>
