@@ -83,6 +83,9 @@ Every user action — login, view, add, edit, delete — is logged with a timest
 | Templating | Thymeleaf |
 | Breach API | HaveIBeenPwned (k-Anonymity model) |
 
+> 📖 **Want to know why each tool was chosen over its alternatives?**
+> See the full breakdown → [TOOLS.md](./Tools_used.md)
+
 ---
 
 ## 📁 Project Structure
